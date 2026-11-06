@@ -2,6 +2,9 @@ package lu.finworkspace.widgets
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.widget.RemoteViews
 
 /** Appearance is saved independently for each widget instance. */
@@ -47,8 +50,13 @@ data class WidgetStyle(
             .putInt(k + "fontSize", fontSize).apply()
     }
     fun apply(views: RemoteViews) {
-        views.setInt(R.id.widget_background, "setColorFilter", background)
-        views.setInt(R.id.widget_background, "setImageAlpha", opacity * 255 / 100)
+        val bitmap = Bitmap.createBitmap(480, 320, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = (background and 0x00FFFFFF) or ((opacity * 255 / 100) shl 24)
+        }
+        canvas.drawRoundRect(0f, 0f, 480f, 320f, 28f, 28f, paint)
+        views.setImageViewBitmap(R.id.widget_background, bitmap)
         views.setTextColor(R.id.widget_title, titleColor)
         views.setTextColor(R.id.widget_icon, titleColor)
         views.setTextColor(R.id.widget_body, amountColor)
