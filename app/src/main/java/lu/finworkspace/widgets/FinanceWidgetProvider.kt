@@ -79,11 +79,17 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label)
             val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount)
             val options = manager.getAppWidgetOptions(id)
-            val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+            val minHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+            val maxHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+            val landscape = context.resources.configuration.orientation ==
+                android.content.res.Configuration.ORIENTATION_LANDSCAPE
+            val heightDp = (if (landscape) minHeightDp else maxHeightDp)
+                .takeIf { it > 0 } ?: minHeightDp.takeIf { it > 0 } ?: maxHeightDp
             val headerDp = if (heading) maxOf(24, style.headerSize + 10) else 0
             val bodyDp = if (body.isNotBlank()) style.fontSize * 3 + 12 else 0
             val rowDp = maxOf(style.fontSize, style.labelSize) + if (style.compact) 4 else 14
-            val availableDp = heightDp - 32 - headerDp - bodyDp
+            val availableDp = (heightDp - 32 - headerDp - bodyDp).coerceAtLeast(0)
+            // Some launchers report zero dimensions while creating a widget.
             val fittingRows = if (heightDp > 0) (availableDp / rowDp).coerceIn(0, 10) else 10
             ids.forEachIndexed { i, row ->
                 val data = if (i < minOf(style.rowCount, fittingRows)) rows.getOrNull(i) else null
