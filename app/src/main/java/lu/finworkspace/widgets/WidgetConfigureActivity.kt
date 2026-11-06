@@ -58,10 +58,12 @@ class WidgetConfigureActivity : Activity() {
         val palette = listOf("#122D4C", "#17213A", "#243B55", "#136F63", "#5C3B82", "#333333", "#FFFFFF", "#000000")
         val colors = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, palette) }
         root.addView(colors)
+        // Preserve a custom HEX value when the palette is first initialized.
+        colors.setSelection(0)
         colors.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, rowId: Long) {
-                if (position != 0 || background.text.isBlank()) background.setText(palette[position])
+                if (position != 0) background.setText(palette[position])
             }
         }
         heading("Прозрачность фона (0% — прозрачный, 100% — непрозрачный)")
