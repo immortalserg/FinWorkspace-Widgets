@@ -20,7 +20,9 @@ data class WidgetStyle(
     val showName: Boolean = true,
     val showHeader: Boolean = true,
     val font: String = "sans",
-    val fontSize: Int = 18
+    val fontSize: Int = 18,
+    val labelSize: Int = 14,
+    val headerSize: Int = 16
 ) {
     companion object {
         fun load(context: Context, id: Int): WidgetStyle {
@@ -35,7 +37,9 @@ data class WidgetStyle(
                 p.getBoolean(k + "showName", true),
                 p.getBoolean(k + "showHeader", true),
                 p.getString(k + "font", "sans") ?: "sans",
-                p.getInt(k + "fontSize", 18).coerceIn(12, 30)
+                p.getInt(k + "fontSize", 18).coerceIn(12, 30),
+                p.getInt(k + "labelSize", 14).coerceIn(10, 24),
+                p.getInt(k + "headerSize", 16).coerceIn(10, 26)
             )
         }
     }
@@ -50,7 +54,9 @@ data class WidgetStyle(
             .putBoolean(k + "showName", showName)
             .putBoolean(k + "showHeader", showHeader)
             .putString(k + "font", font)
-            .putInt(k + "fontSize", fontSize).apply()
+            .putInt(k + "fontSize", fontSize)
+            .putInt(k + "labelSize", labelSize)
+            .putInt(k + "headerSize", headerSize).apply()
     }
     fun styled(value: String): CharSequence {
         val family = when (font) {
@@ -71,12 +77,16 @@ data class WidgetStyle(
         canvas.drawRoundRect(0f, 0f, 480f, 320f, 28f, 28f, paint)
         views.setImageViewBitmap(R.id.widget_background, bitmap)
         views.setTextColor(R.id.widget_title, titleColor)
+        views.setTextViewTextSize(R.id.widget_title, android.util.TypedValue.COMPLEX_UNIT_SP, headerSize.toFloat())
         views.setTextColor(R.id.widget_icon, titleColor)
         views.setTextColor(R.id.widget_body, amountColor)
         views.setTextViewTextSize(R.id.widget_body, android.util.TypedValue.COMPLEX_UNIT_SP, fontSize.toFloat())
         val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label)
         val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount)
-        labels.forEach { views.setTextColor(it, titleColor) }
+        labels.forEach {
+            views.setTextColor(it, titleColor)
+            views.setTextViewTextSize(it, android.util.TypedValue.COMPLEX_UNIT_SP, labelSize.toFloat())
+        }
         amounts.forEach { views.setTextColor(it, amountColor) }
         // Font family requires predeclared text appearances; avoid invoking
         // setTextAppearance via RemoteViews because it is not supported on all launchers.
