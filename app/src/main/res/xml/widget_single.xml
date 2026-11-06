@@ -1,0 +1,8 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp" android:minHeight="100dp"
+    android:minResizeWidth="150dp" android:minResizeHeight="80dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_finance"
+    android:configure="lu.finworkspace.widgets.AccountWidgetConfigureActivity"
+    android:widgetCategory="home_screen"/>
