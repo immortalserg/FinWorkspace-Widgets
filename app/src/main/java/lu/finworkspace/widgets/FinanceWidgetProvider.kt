@@ -32,7 +32,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
         ids.forEach { id ->
             prefs.remove("account_$id")
-            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize").forEach { prefs.remove("style_${id}_$it") }
+            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount").forEach { prefs.remove("style_${id}_$it") }
         }
         prefs.apply()
     }
@@ -74,7 +74,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label)
             val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount)
             ids.forEachIndexed { i, row ->
-                val data = rows.getOrNull(i)
+                val data = if (i < style.rowCount) rows.getOrNull(i) else null
                 views.setViewVisibility(row, if (data == null) android.view.View.GONE else android.view.View.VISIBLE)
                 if (data != null) {
                     val labelText = if (style.showName) data.first else data.first.takeWhile { it != ' ' }
