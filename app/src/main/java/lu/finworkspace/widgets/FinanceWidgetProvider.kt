@@ -37,7 +37,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
         ids.forEach { id ->
             prefs.remove("account_$id")
-            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount", "compact").forEach { prefs.remove("style_${id}_$it") }
+            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount", "compact", "nameLines").forEach { prefs.remove("style_${id}_$it") }
         }
         prefs.apply()
     }
@@ -91,7 +91,8 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
                 .takeIf { it > 0 } ?: minHeightDp.takeIf { it > 0 } ?: maxHeightDp
             val headerDp = if (heading) maxOf(24, style.headerSize + 10) else 0
             val bodyDp = if (body.isNotBlank()) style.fontSize * 3 + 12 else 0
-            val rowDp = maxOf(style.fontSize, style.labelSize) + if (style.compact) 4 else 14
+            val labelHeight = style.labelSize * if (style.nameLines == 2) 2 else 1
+            val rowDp = maxOf(style.fontSize, labelHeight) + if (style.compact) 4 else 14
             val availableDp = (heightDp - 32 - headerDp - bodyDp).coerceAtLeast(0)
             // Some launchers report zero dimensions while creating a widget.
             val fittingRows = if (heightDp > 0) (availableDp / rowDp).coerceIn(0, 10) else 10
@@ -99,7 +100,11 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
                 val data = if (i < minOf(style.rowCount, fittingRows)) rows.getOrNull(i) else null
                 views.setViewVisibility(row, if (data == null) android.view.View.GONE else android.view.View.VISIBLE)
                 if (data != null) {
-                    val labelText = if (style.showName) data.first else data.first.takeWhile { it != ' ' }
+                    val labelText = if (style.nameLines > 0) data.first else {
+                        if (provider == TransactionsWidget::class.java) data.first.takeWhile { it != ' ' }
+                        else ""
+                    }
+                    views.setInt(labels[i], "setMaxLines", if (style.nameLines == 2) 2 else 1)
                     val styledLabel = SpannableString(style.styled(labelText))
                     if (provider == TransactionsWidget::class.java && styledLabel.isNotEmpty()) {
                         val iconColor = when (styledLabel.first()) {
