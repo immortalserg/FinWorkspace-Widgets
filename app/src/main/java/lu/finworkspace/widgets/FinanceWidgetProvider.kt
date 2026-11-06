@@ -7,6 +7,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.graphics.Color
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -73,7 +77,17 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
                 val data = rows.getOrNull(i)
                 views.setViewVisibility(row, if (data == null) android.view.View.GONE else android.view.View.VISIBLE)
                 if (data != null) {
-                    views.setTextViewText(labels[i], style.styled(if (style.showName) data.first else ""))
+                    val labelText = if (style.showName) data.first else data.first.takeWhile { it != ' ' }
+                    val styledLabel = SpannableString(style.styled(labelText))
+                    if (provider == TransactionsWidget::class.java && styledLabel.isNotEmpty()) {
+                        val iconColor = when (styledLabel.first()) {
+                            '↘' -> Color.rgb(255, 124, 124)
+                            '↗' -> Color.rgb(98, 220, 157)
+                            else -> Color.rgb(127, 191, 255)
+                        }
+                        styledLabel.setSpan(ForegroundColorSpan(iconColor), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    }
+                    views.setTextViewText(labels[i], styledLabel)
                     views.setTextViewText(amounts[i], style.styled(data.second))
                     views.setTextViewTextSize(amounts[i], android.util.TypedValue.COMPLEX_UNIT_SP, style.fontSize.toFloat())
                 }
