@@ -60,7 +60,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             style.apply(views)
             views.setTextViewText(R.id.widget_icon, style.icon)
             views.setViewVisibility(R.id.widget_icon, if (style.icon.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE)
-            val heading = style.showHeader || style.showName
+            val heading = style.showHeader || style.icon.isNotEmpty()
             views.setViewVisibility(R.id.widget_heading, if (heading) android.view.View.VISIBLE else android.view.View.GONE)
             views.setTextViewText(R.id.widget_title, if (style.showHeader) title else "")
             views.setViewVisibility(R.id.widget_title, if (style.showHeader) android.view.View.VISIBLE else android.view.View.GONE)
@@ -120,7 +120,9 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
                 val (title, body, rows) = when (provider) {
                     SingleAccountWidget::class.java -> {
                         val accountId = prefs.getInt("account_$id", -1)
-                        Triple("Счёт", formatSingle(accounts, accountId), emptyList<Pair<String, String>>())
+                        val row = singleAccountRow(accounts, accountId)
+                        if (row == null) Triple("Счёт", "Выберите счёт в настройках", emptyList<Pair<String, String>>())
+                        else Triple("Счёт", "", listOf(row))
                     }
                     TransactionsWidget::class.java -> Triple("Последние транзакции", "", transactionRows(transactions, accounts))
                     else -> Triple("Все счета", "", accountRows(accounts))
@@ -138,14 +140,16 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     private fun money(value: Double, code: String): String = runCatching {
         NumberFormat.getCurrencyInstance().apply { currency = Currency.getInstance(code) }.format(value)
     }.getOrElse { "$value $code" }
-    private fun formatSingle(accounts: JSONArray, id: Int): String {
+    private fun singleAccountRow(accounts: JSONArray, id: Int): Pair<String, String>? {
         for (i in 0 until accounts.length()) {
             val account = accounts.getJSONObject(i)
             if (account.optInt("id") == id) {
-                return account.optString("name") + "  " + money(account.optDouble("balance"), account.optString("currency", "EUR"))
+                return account.optString("name") to money(
+                    account.optDouble("balance"), account.optString("currency", "EUR")
+                )
             }
         }
-        return "Выберите счёт при добавлении виджета"
+        return null
     }
     private fun accountRows(accounts: JSONArray): List<Pair<String, String>> {
         val totals = linkedMapOf<String, Double>()
