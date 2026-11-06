@@ -22,7 +22,8 @@ data class WidgetStyle(
     val font: String = "sans",
     val fontSize: Int = 18,
     val labelSize: Int = 14,
-    val headerSize: Int = 16
+    val headerSize: Int = 16,
+    val rowCount: Int = 5
 ) {
     companion object {
         fun load(context: Context, id: Int): WidgetStyle {
@@ -39,7 +40,8 @@ data class WidgetStyle(
                 p.getString(k + "font", "sans") ?: "sans",
                 p.getInt(k + "fontSize", 18).coerceIn(12, 30),
                 p.getInt(k + "labelSize", 14).coerceIn(10, 24),
-                p.getInt(k + "headerSize", 16).coerceIn(10, 26)
+                p.getInt(k + "headerSize", 16).coerceIn(10, 26),
+                p.getInt(k + "rowCount", 5).coerceIn(1, 5)
             )
         }
     }
@@ -56,7 +58,8 @@ data class WidgetStyle(
             .putString(k + "font", font)
             .putInt(k + "fontSize", fontSize)
             .putInt(k + "labelSize", labelSize)
-            .putInt(k + "headerSize", headerSize).apply()
+            .putInt(k + "headerSize", headerSize)
+            .putInt(k + "rowCount", rowCount).apply()
     }
     fun styled(value: String): CharSequence {
         val family = when (font) {
