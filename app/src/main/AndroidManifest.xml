@@ -4,9 +4,18 @@
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
-        <receiver android:name=".FinanceWidgetProvider" android:exported="true">
+        <activity android:name=".AccountWidgetConfigureActivity" android:exported="true"/>
+        <receiver android:name=".SingleAccountWidget" android:exported="true" android:label="FinWorkspace — Счёт">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/finance_widget"/>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single"/>
+        </receiver>
+        <receiver android:name=".AllAccountsWidget" android:exported="true" android:label="FinWorkspace — Все счета">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_all"/>
+        </receiver>
+        <receiver android:name=".TransactionsWidget" android:exported="true" android:label="FinWorkspace — Транзакции">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_transactions"/>
         </receiver>
     </application>
 </manifest>
