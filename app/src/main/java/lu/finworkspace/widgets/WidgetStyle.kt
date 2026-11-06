@@ -57,13 +57,7 @@ data class WidgetStyle(
         val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount)
         labels.forEach { views.setTextColor(it, titleColor) }
         amounts.forEach { views.setTextColor(it, amountColor) }
-        // Android RemoteViews cannot accept a Typeface instance. Select from XML text appearances.
-        val appearance = when (font) {
-            "serif" -> R.style.WidgetTextSerif
-            "mono" -> R.style.WidgetTextMono
-            else -> R.style.WidgetTextSans
-        }
-        views.setInt(R.id.widget_body, "setTextAppearance", appearance)
-        amounts.forEach { views.setInt(it, "setTextAppearance", appearance) }
+        // Font family requires predeclared text appearances; avoid invoking
+        // setTextAppearance via RemoteViews because it is not supported on all launchers.
     }
 }
