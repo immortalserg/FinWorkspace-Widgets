@@ -1,0 +1,11 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/widget_background" android:orientation="vertical" android:padding="16dp">
+    <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="FinWorkspace" android:textColor="#B8CDE5" android:textSize="13sp"/>
+    <TextView android:id="@+id/widget_body" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:text="Откройте приложение для настройки"
+        android:textColor="#FFFFFF" android:textSize="18sp" android:maxLines="7"/>
+    <TextView android:id="@+id/widget_footer" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:text="Нажмите для обновления" android:textColor="#9FBBD8" android:textSize="11sp"/>
+</LinearLayout>
