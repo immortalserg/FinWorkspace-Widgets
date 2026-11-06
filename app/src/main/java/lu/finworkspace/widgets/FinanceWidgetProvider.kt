@@ -32,7 +32,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
         ids.forEach { id ->
             prefs.remove("account_$id")
-            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount").forEach { prefs.remove("style_${id}_$it") }
+            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount", "compact").forEach { prefs.remove("style_${id}_$it") }
         }
         prefs.apply()
     }
@@ -70,9 +70,9 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             views.setViewVisibility(R.id.widget_title, if (style.showHeader) android.view.View.VISIBLE else android.view.View.GONE)
             views.setTextViewText(R.id.widget_body, style.styled(body))
             views.setViewVisibility(R.id.widget_body, if (body.isBlank()) android.view.View.GONE else android.view.View.VISIBLE)
-            val ids = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5)
-            val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label)
-            val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount)
+            val ids = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9, R.id.row_10)
+            val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label)
+            val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount)
             ids.forEachIndexed { i, row ->
                 val data = if (i < style.rowCount) rows.getOrNull(i) else null
                 views.setViewVisibility(row, if (data == null) android.view.View.GONE else android.view.View.VISIBLE)
@@ -173,7 +173,7 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             val code = a.optString("currency", "EUR")
             totals[code] = (totals[code] ?: 0.0) + a.optDouble("balance")
         }
-        return totals.entries.take(5).map { (code, value) -> code to money(value, code) }
+        return totals.entries.take(10).map { (code, value) -> code to money(value, code) }
     }
     private fun transactionRows(items: JSONArray, accounts: JSONArray): List<Pair<String, String>> {
         val currencies = mutableMapOf<Int, String>()
@@ -181,7 +181,7 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             val a = accounts.getJSONObject(i)
             currencies[a.optInt("id")] = a.optString("currency", "EUR")
         }
-        return (0 until minOf(items.length(), 5)).map { i ->
+        return (0 until minOf(items.length(), 10)).map { i ->
             val item = items.getJSONObject(i)
             val type = item.optString("type")
             val sign = when (type) { "expense" -> "−"; "income" -> "+"; else -> "⇄" }
