@@ -93,6 +93,18 @@ class WidgetConfigureActivity : Activity() {
         heading("Размер шрифта заголовка (10–26 sp)")
         val headerSize = SeekBar(this).apply { max = 16; progress = style.headerSize - 10 }
         root.addView(headerSize)
+        heading("Количество строк (1–5)")
+        val rowCount = SeekBar(this).apply { max = 4; progress = style.rowCount - 1 }
+        root.addView(rowCount)
+        val rowCountValue = TextView(this).apply { text = "${rowCount.progress + 1} строк" }
+        root.addView(rowCountValue)
+        rowCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                rowCountValue.text = "${progress + 1} строк"
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
         val error = TextView(this)
         root.addView(error)
         val save = Button(this).apply { text = "Сохранить настройки" }
@@ -112,7 +124,8 @@ class WidgetConfigureActivity : Activity() {
                     listOf("sans", "serif", "mono")[font.selectedItemPosition],
                     fontSize.progress + 12,
                     labelSize.progress + 10,
-                    headerSize.progress + 10
+                    headerSize.progress + 10,
+                    rowCount.progress + 1
                 )
                 updated.save(this, id)
                 if (selected != null) getSharedPreferences("widget_instances", MODE_PRIVATE).edit().putInt("account_$id", selected).apply()
