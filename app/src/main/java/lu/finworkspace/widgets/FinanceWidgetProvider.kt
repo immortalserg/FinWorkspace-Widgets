@@ -32,7 +32,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
         ids.forEach { id ->
             prefs.remove("account_$id")
-            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize").forEach { prefs.remove("style_${id}_$it") }
+            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize").forEach { prefs.remove("style_${id}_$it") }
         }
         prefs.apply()
     }
