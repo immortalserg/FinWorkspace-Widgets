@@ -18,10 +18,16 @@ import java.text.NumberFormat
 import java.util.Currency
 import java.util.concurrent.TimeUnit
 
-class FinanceWidgetProvider : AppWidgetProvider() {
+/** Each provider is a separate widget type in the Android widget picker. */
+open class FinanceWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         schedule(context)
         refresh(context)
+    }
+    override fun onDeleted(context: Context, ids: IntArray) {
+        val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
+        ids.forEach { prefs.remove("account_$it") }
+        prefs.apply()
     }
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
@@ -30,50 +36,78 @@ class FinanceWidgetProvider : AppWidgetProvider() {
     companion object {
         const val ACTION_REFRESH = "lu.finworkspace.widgets.REFRESH"
         fun schedule(context: Context) {
-            val task = PeriodicWorkRequestBuilder<WidgetWorker>(30, TimeUnit.MINUTES).build()
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork("finance-widgets", ExistingPeriodicWorkPolicy.KEEP, task)
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                "finance-widgets",
+                ExistingPeriodicWorkPolicy.KEEP,
+                PeriodicWorkRequestBuilder<WidgetWorker>(30, TimeUnit.MINUTES).build()
+            )
         }
         fun refresh(context: Context) {
             WorkManager.getInstance(context).enqueue(OneTimeWorkRequestBuilder<WidgetWorker>().build())
         }
-        fun render(context: Context, title: String, body: String, footer: String) {
+        fun render(context: Context, provider: Class<out AppWidgetProvider>, id: Int, title: String, body: String, footer: String) {
             val manager = AppWidgetManager.getInstance(context)
-            val component = ComponentName(context, FinanceWidgetProvider::class.java)
-            val intent = Intent(context, FinanceWidgetProvider::class.java).setAction(ACTION_REFRESH)
-            val pending = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            manager.getAppWidgetIds(component).forEach { id ->
-                val views = RemoteViews(context.packageName, R.layout.widget_finance)
-                views.setTextViewText(R.id.widget_title, title)
-                views.setTextViewText(R.id.widget_body, body)
-                views.setTextViewText(R.id.widget_footer, footer)
-                views.setOnClickPendingIntent(R.id.widget_footer, pending)
-                manager.updateAppWidget(id, views)
+            val intent = Intent(context, provider).setAction(ACTION_REFRESH)
+            val pending = PendingIntent.getBroadcast(
+                context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val views = RemoteViews(context.packageName, R.layout.widget_finance)
+            views.setTextViewText(R.id.widget_title, title)
+            views.setTextViewText(R.id.widget_body, body)
+            views.setTextViewText(R.id.widget_footer, footer)
+            views.setOnClickPendingIntent(R.id.widget_footer, pending)
+            manager.updateAppWidget(id, views)
+        }
+        fun allWidgets(context: Context): List<Pair<Class<out AppWidgetProvider>, Int>> {
+            val manager = AppWidgetManager.getInstance(context)
+            return listOf(
+                SingleAccountWidget::class.java,
+                AllAccountsWidget::class.java,
+                TransactionsWidget::class.java
+            ).flatMap { provider ->
+                manager.getAppWidgetIds(ComponentName(context, provider)).map { provider to it }
             }
         }
     }
 }
 
+class SingleAccountWidget : FinanceWidgetProvider()
+class AllAccountsWidget : FinanceWidgetProvider()
+class TransactionsWidget : FinanceWidgetProvider()
+
 class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val settings = SecureSettings(applicationContext)
+        val context = applicationContext
+        val widgets = FinanceWidgetProvider.allWidgets(context)
+        if (widgets.isEmpty()) return Result.success()
+        val settings = SecureSettings(context)
         if (settings.server.isBlank() || settings.accessToken.isBlank()) {
-            FinanceWidgetProvider.render(applicationContext, "FinWorkspace", "Настройте подключение в приложении", "Нажмите для обновления")
+            widgets.forEach { (provider, id) ->
+                FinanceWidgetProvider.render(context, provider, id, "FinWorkspace", "Откройте приложение и подключите сервер", "Нажмите для обновления")
+            }
             return Result.success()
         }
         return try {
             val api = FinanceApi(settings)
             val accounts = api.accounts()
-            val mode = settings.mode
-            val body = when (mode) {
-                "transactions" -> formatTransactions(api.transactions())
-                "single" -> formatSingle(accounts, settings.accountId)
-                else -> formatAll(accounts)
+            val transactions = if (widgets.any { it.first == TransactionsWidget::class.java }) api.transactions() else JSONArray()
+            val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE)
+            widgets.forEach { (provider, id) ->
+                val (title, body) = when (provider) {
+                    SingleAccountWidget::class.java -> {
+                        val accountId = prefs.getInt("account_$id", -1)
+                        "Счёт" to formatSingle(accounts, accountId)
+                    }
+                    TransactionsWidget::class.java -> "Последние транзакции" to formatTransactions(transactions, accounts)
+                    else -> "Все счета" to formatAll(accounts)
+                }
+                FinanceWidgetProvider.render(context, provider, id, title, body, "Нажмите для обновления")
             }
-            val title = when (mode) { "transactions" -> "Последние транзакции"; "single" -> "Счёт"; else -> "Все счета" }
-            FinanceWidgetProvider.render(applicationContext, title, body, "Обновлено · нажмите для обновления")
             Result.success()
         } catch (e: Exception) {
-            FinanceWidgetProvider.render(applicationContext, "FinWorkspace", "Нет соединения или сессия истекла", "Нажмите для повтора")
+            widgets.forEach { (provider, id) ->
+                FinanceWidgetProvider.render(context, provider, id, "FinWorkspace", "Не удалось обновить данные", "Нажмите для повтора")
+            }
             Result.retry()
         }
     }
@@ -83,26 +117,36 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
     private fun formatSingle(accounts: JSONArray, id: Int): String {
         for (i in 0 until accounts.length()) {
             val account = accounts.getJSONObject(i)
-            if (account.optInt("id") == id) return "${account.optString("name")}\n${money(account.optDouble("balance"), account.optString("currency", "EUR"))}"
+            if (account.optInt("id") == id) {
+                return "${account.optString("name")}\n${money(account.optDouble("balance"), account.optString("currency", "EUR"))}"
+            }
         }
-        return "Выберите счёт в настройках"
+        return "Выберите счёт при добавлении виджета"
     }
     private fun formatAll(accounts: JSONArray): String {
         val totals = linkedMapOf<String, Double>()
         for (i in 0 until accounts.length()) {
-            val a = accounts.getJSONObject(i)
-            if (!a.optBoolean("is_active", true)) continue
-            val currency = a.optString("currency", "EUR")
-            totals[currency] = (totals[currency] ?: 0.0) + a.optDouble("balance")
+            val account = accounts.getJSONObject(i)
+            if (!account.optBoolean("is_active", true)) continue
+            val code = account.optString("currency", "EUR")
+            totals[code] = (totals[code] ?: 0.0) + account.optDouble("balance")
         }
-        return if (totals.isEmpty()) "Нет счетов" else totals.entries.joinToString("\n") { (code, amount) -> money(amount, code) }
+        return if (totals.isEmpty()) "Нет счетов" else totals.entries.joinToString("\n") { (code, total) -> money(total, code) }
     }
-    private fun formatTransactions(items: JSONArray): String {
+    private fun formatTransactions(items: JSONArray, accounts: JSONArray): String {
         if (items.length() == 0) return "Нет транзакций"
+        val currencies = mutableMapOf<Int, String>()
+        for (i in 0 until accounts.length()) {
+            val a = accounts.getJSONObject(i)
+            currencies[a.optInt("id")] = a.optString("currency", "EUR")
+        }
         return (0 until minOf(items.length(), 5)).joinToString("\n") { index ->
             val item = items.getJSONObject(index)
-            val symbol = if (item.optString("type") == "expense") "−" else if (item.optString("type") == "income") "+" else "⇄"
-            "${item.optString("description").take(22)}  $symbol${item.optDouble("amount")}"
+            val sign = when (item.optString("type")) { "expense" -> "−"; "income" -> "+"; else -> "⇄" }
+            val currency = currencies[item.optInt("account_id")] ?: ""
+            val amount = if (currency.isNotBlank()) money(item.optDouble("amount"), currency)
+                else item.optString("amount")
+            "${item.optString("description").take(20)}  $sign$amount"
         }
     }
 }
