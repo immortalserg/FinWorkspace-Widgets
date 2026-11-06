@@ -26,7 +26,10 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
     }
     override fun onDeleted(context: Context, ids: IntArray) {
         val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
-        ids.forEach { id ->\n            prefs.remove("account_$id")\n            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize").forEach { prefs.remove("style_${id}_$it") }\n        }
+        ids.forEach { id ->
+            prefs.remove("account_$id")
+            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize").forEach { prefs.remove("style_${id}_$it") }
+        }
         prefs.apply()
     }
     override fun onReceive(context: Context, intent: Intent) {
@@ -139,7 +142,8 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         for (i in 0 until accounts.length()) {
             val account = accounts.getJSONObject(i)
             if (account.optInt("id") == id) {
-                return "${account.optString("name")}\n${money(account.optDouble("balance"), account.optString("currency", "EUR"))}"
+                return "${account.optString("name")}
+${money(account.optDouble("balance"), account.optString("currency", "EUR"))}"
             }
         }
         return "Выберите счёт при добавлении виджета"
@@ -178,7 +182,8 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             val code = account.optString("currency", "EUR")
             totals[code] = (totals[code] ?: 0.0) + account.optDouble("balance")
         }
-        return if (totals.isEmpty()) "Нет счетов" else totals.entries.joinToString("\n") { (code, total) -> money(total, code) }
+        return if (totals.isEmpty()) "Нет счетов" else totals.entries.joinToString("
+") { (code, total) -> money(total, code) }
     }
     private fun formatTransactions(items: JSONArray, accounts: JSONArray): String {
         if (items.length() == 0) return "Нет транзакций"
@@ -187,7 +192,8 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             val a = accounts.getJSONObject(i)
             currencies[a.optInt("id")] = a.optString("currency", "EUR")
         }
-        return (0 until minOf(items.length(), 5)).joinToString("\n") { index ->
+        return (0 until minOf(items.length(), 5)).joinToString("
+") { index ->
             val item = items.getJSONObject(index)
             val sign = when (item.optString("type")) { "expense" -> "−"; "income" -> "+"; else -> "⇄" }
             val currency = currencies[item.optInt("account_id")] ?: ""
