@@ -6,6 +6,9 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.widget.RemoteViews
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.TypefaceSpan
 
 /** Appearance is saved independently for each widget instance. */
 data class WidgetStyle(
@@ -48,6 +51,16 @@ data class WidgetStyle(
             .putBoolean(k + "showHeader", showHeader)
             .putString(k + "font", font)
             .putInt(k + "fontSize", fontSize).apply()
+    }
+    fun styled(value: String): CharSequence {
+        val family = when (font) {
+            "serif" -> "serif"
+            "mono" -> "monospace"
+            else -> "sans-serif"
+        }
+        return SpannableString(value).apply {
+            if (isNotEmpty()) setSpan(TypefaceSpan(family), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
     }
     fun apply(views: RemoteViews) {
         val bitmap = Bitmap.createBitmap(480, 320, Bitmap.Config.ARGB_8888)
