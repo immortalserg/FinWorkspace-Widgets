@@ -142,8 +142,7 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         for (i in 0 until accounts.length()) {
             val account = accounts.getJSONObject(i)
             if (account.optInt("id") == id) {
-                return "${account.optString("name")}
-${money(account.optDouble("balance"), account.optString("currency", "EUR"))}"
+                return account.optString("name") + "  " + money(account.optDouble("balance"), account.optString("currency", "EUR"))
             }
         }
         return "Выберите счёт при добавлении виджета"
@@ -172,34 +171,6 @@ ${money(account.optDouble("balance"), account.optString("currency", "EUR"))}"
             val code = currencies[item.optInt("account_id")] ?: ""
             val amount = if (code.isNotBlank()) money(item.optDouble("amount"), code) else item.optString("amount")
             "$icon  ${item.optString("description").ifBlank { "Операция" }}" to "$sign$amount"
-        }
-    }
-    private fun formatAll(accounts: JSONArray): String {
-        val totals = linkedMapOf<String, Double>()
-        for (i in 0 until accounts.length()) {
-            val account = accounts.getJSONObject(i)
-            if (!account.optBoolean("is_active", true)) continue
-            val code = account.optString("currency", "EUR")
-            totals[code] = (totals[code] ?: 0.0) + account.optDouble("balance")
-        }
-        return if (totals.isEmpty()) "Нет счетов" else totals.entries.joinToString("
-") { (code, total) -> money(total, code) }
-    }
-    private fun formatTransactions(items: JSONArray, accounts: JSONArray): String {
-        if (items.length() == 0) return "Нет транзакций"
-        val currencies = mutableMapOf<Int, String>()
-        for (i in 0 until accounts.length()) {
-            val a = accounts.getJSONObject(i)
-            currencies[a.optInt("id")] = a.optString("currency", "EUR")
-        }
-        return (0 until minOf(items.length(), 5)).joinToString("
-") { index ->
-            val item = items.getJSONObject(index)
-            val sign = when (item.optString("type")) { "expense" -> "−"; "income" -> "+"; else -> "⇄" }
-            val currency = currencies[item.optInt("account_id")] ?: ""
-            val amount = if (currency.isNotBlank()) money(item.optDouble("amount"), currency)
-                else item.optString("amount")
-            "${item.optString("description").take(20)}  $sign$amount"
         }
     }
 }
