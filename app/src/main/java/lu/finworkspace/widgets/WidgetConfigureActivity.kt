@@ -77,9 +77,15 @@ class WidgetConfigureActivity : Activity() {
         val icons = listOf("◆", "🏦", "💳", "💰", "💵", "📊", "📈", "↔", "🛒", "🚗", "🏠", "★", "●", "Без иконки")
         val icon = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, icons); setSelection(icons.indexOf(style.icon).coerceAtLeast(0)) }
         root.addView(icon)
-        val showName = CheckBox(this).apply { text = "Отображать название"; isChecked = style.showName }
         val showHeader = CheckBox(this).apply { text = "Отображать заголовок"; isChecked = style.showHeader }
-        root.addView(showName); root.addView(showHeader)
+        root.addView(showHeader)
+        heading("Отображение названий")
+        val nameModes = listOf("Одна строка", "Две строки", "Только иконка")
+        val nameMode = Spinner(this).apply {
+            adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, nameModes)
+            setSelection(when (style.nameLines) { 2 -> 1; 0 -> 2; else -> 0 })
+        }
+        root.addView(nameMode)
         heading("Шрифт")
         val fonts = listOf("Обычный", "С засечками", "Моноширинный")
         val font = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, fonts); setSelection(listOf("sans", "serif", "mono").indexOf(style.font).coerceAtLeast(0)) }
@@ -125,13 +131,14 @@ class WidgetConfigureActivity : Activity() {
                     Color.parseColor(titleColor.text.toString().trim()),
                     Color.parseColor(amountColor.text.toString().trim()),
                     icons[icon.selectedItemPosition].takeUnless { it == "Без иконки" } ?: "",
-                    showName.isChecked, showHeader.isChecked,
+                    nameMode.selectedItemPosition != 2, showHeader.isChecked,
                     listOf("sans", "serif", "mono")[font.selectedItemPosition],
                     fontSize.progress + 12,
                     labelSize.progress + 10,
                     headerSize.progress + 10,
                     rowCount.progress + 1,
-                    compact.isChecked
+                    compact.isChecked,
+                    when (nameMode.selectedItemPosition) { 1 -> 2; 2 -> 0; else -> 1 }
                 )
                 updated.save(this, id)
                 if (selected != null) getSharedPreferences("widget_instances", MODE_PRIVATE).edit().putInt("account_$id", selected).apply()
