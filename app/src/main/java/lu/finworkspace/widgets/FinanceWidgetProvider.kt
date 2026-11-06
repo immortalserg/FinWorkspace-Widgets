@@ -79,10 +79,14 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label)
             val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount)
             val options = manager.getAppWidgetOptions(id)
+            val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+            val maxWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
             val minHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
             val maxHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
             val landscape = context.resources.configuration.orientation ==
                 android.content.res.Configuration.ORIENTATION_LANDSCAPE
+            val widthDp = (if (landscape) maxWidthDp else minWidthDp)
+                .takeIf { it > 0 } ?: minWidthDp.takeIf { it > 0 } ?: maxWidthDp
             val heightDp = (if (landscape) minHeightDp else maxHeightDp)
                 .takeIf { it > 0 } ?: minHeightDp.takeIf { it > 0 } ?: maxHeightDp
             val headerDp = if (heading) maxOf(24, style.headerSize + 10) else 0
@@ -107,7 +111,14 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
                     }
                     views.setTextViewText(labels[i], styledLabel)
                     views.setTextViewText(amounts[i], style.styled(data.second))
-                    views.setTextViewTextSize(amounts[i], android.util.TypedValue.COMPLEX_UNIT_SP, style.fontSize.toFloat())
+                    // On narrow launchers reserve space for the label instead of letting
+                    // a long formatted amount consume the entire horizontal row.
+                    val amountSize = when {
+                        widthDp in 1..210 -> minOf(style.fontSize, 13)
+                        widthDp in 211..270 -> minOf(style.fontSize, 15)
+                        else -> style.fontSize
+                    }
+                    views.setTextViewTextSize(amounts[i], android.util.TypedValue.COMPLEX_UNIT_SP, amountSize.toFloat())
                 }
             }
             views.setOnClickPendingIntent(R.id.widget_background, settingsIntent)
