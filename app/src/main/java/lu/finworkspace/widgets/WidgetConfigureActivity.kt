@@ -87,6 +87,12 @@ class WidgetConfigureActivity : Activity() {
         heading("Размер шрифта суммы (12–30 sp)")
         val fontSize = SeekBar(this).apply { max = 18; progress = style.fontSize - 12 }
         root.addView(fontSize)
+        heading("Размер шрифта названий (10–24 sp)")
+        val labelSize = SeekBar(this).apply { max = 14; progress = style.labelSize - 10 }
+        root.addView(labelSize)
+        heading("Размер шрифта заголовка (10–26 sp)")
+        val headerSize = SeekBar(this).apply { max = 16; progress = style.headerSize - 10 }
+        root.addView(headerSize)
         val error = TextView(this)
         root.addView(error)
         val save = Button(this).apply { text = "Сохранить настройки" }
@@ -104,7 +110,9 @@ class WidgetConfigureActivity : Activity() {
                     icons[icon.selectedItemPosition].takeUnless { it == "Без иконки" } ?: "",
                     showName.isChecked, showHeader.isChecked,
                     listOf("sans", "serif", "mono")[font.selectedItemPosition],
-                    fontSize.progress + 12
+                    fontSize.progress + 12,
+                    labelSize.progress + 10,
+                    headerSize.progress + 10
                 )
                 updated.save(this, id)
                 if (selected != null) getSharedPreferences("widget_instances", MODE_PRIVATE).edit().putInt("account_$id", selected).apply()
