@@ -3,6 +3,7 @@ package lu.finworkspace.widgets
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.os.Bundle
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -26,6 +27,10 @@ import java.util.concurrent.TimeUnit
 open class FinanceWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         schedule(context)
+        refresh(context)
+    }
+    override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, appWidgetId: Int, newOptions: Bundle) {
+        super.onAppWidgetOptionsChanged(context, manager, appWidgetId, newOptions)
         refresh(context)
     }
     override fun onDeleted(context: Context, ids: IntArray) {
@@ -73,8 +78,15 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             val ids = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9, R.id.row_10)
             val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label)
             val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount)
+            val options = manager.getAppWidgetOptions(id)
+            val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+            val headerDp = if (heading) maxOf(24, style.headerSize + 10) else 0
+            val bodyDp = if (body.isNotBlank()) style.fontSize * 3 + 12 else 0
+            val rowDp = maxOf(style.fontSize, style.labelSize) + if (style.compact) 4 else 14
+            val availableDp = heightDp - 32 - headerDp - bodyDp
+            val fittingRows = if (heightDp > 0) (availableDp / rowDp).coerceIn(0, 10) else 10
             ids.forEachIndexed { i, row ->
-                val data = if (i < style.rowCount) rows.getOrNull(i) else null
+                val data = if (i < minOf(style.rowCount, fittingRows)) rows.getOrNull(i) else null
                 views.setViewVisibility(row, if (data == null) android.view.View.GONE else android.view.View.VISIBLE)
                 if (data != null) {
                     val labelText = if (style.showName) data.first else data.first.takeWhile { it != ' ' }
