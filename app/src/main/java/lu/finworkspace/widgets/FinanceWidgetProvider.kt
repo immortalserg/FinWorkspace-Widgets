@@ -58,13 +58,13 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             )
             val views = RemoteViews(context.packageName, R.layout.widget_finance)
             style.apply(views)
-            views.setTextViewText(R.id.widget_icon, style.icon)
+            views.setTextViewText(R.id.widget_icon, style.styled(style.icon))
             views.setViewVisibility(R.id.widget_icon, if (style.icon.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE)
             val heading = style.showHeader || style.icon.isNotEmpty()
             views.setViewVisibility(R.id.widget_heading, if (heading) android.view.View.VISIBLE else android.view.View.GONE)
-            views.setTextViewText(R.id.widget_title, if (style.showHeader) title else "")
+            views.setTextViewText(R.id.widget_title, style.styled(if (style.showHeader) title else ""))
             views.setViewVisibility(R.id.widget_title, if (style.showHeader) android.view.View.VISIBLE else android.view.View.GONE)
-            views.setTextViewText(R.id.widget_body, body)
+            views.setTextViewText(R.id.widget_body, style.styled(body))
             views.setViewVisibility(R.id.widget_body, if (body.isBlank()) android.view.View.GONE else android.view.View.VISIBLE)
             val ids = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5)
             val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label)
@@ -73,8 +73,8 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
                 val data = rows.getOrNull(i)
                 views.setViewVisibility(row, if (data == null) android.view.View.GONE else android.view.View.VISIBLE)
                 if (data != null) {
-                    views.setTextViewText(labels[i], if (style.showName) data.first else "")
-                    views.setTextViewText(amounts[i], data.second)
+                    views.setTextViewText(labels[i], style.styled(if (style.showName) data.first else ""))
+                    views.setTextViewText(amounts[i], style.styled(data.second))
                     views.setTextViewTextSize(amounts[i], android.util.TypedValue.COMPLEX_UNIT_SP, style.fontSize.toFloat())
                 }
             }
