@@ -120,6 +120,8 @@ class WidgetConfigureActivity : Activity() {
         addControl(TextView(this).apply { text = "Прозрачность фона (0% — прозрачный, 100% — непрозрачный)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val opacity = SeekBar(this).apply { max = 100; progress = style.opacity }
         addControl(opacity)
+        val opacityValue = TextView(this).apply { text = "${opacity.progress}%" }
+        addControl(opacityValue)
         addControl(TextView(this).apply { text = "Цвет названий (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val titleColor = entry(String.format("#%06X", 0xFFFFFF and style.titleColor), "#CDE1F8")
         colorSwatches(titleColor, listOf("#CDE1F8", "#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3"))
@@ -147,12 +149,18 @@ class WidgetConfigureActivity : Activity() {
         addControl(TextView(this).apply { text = "Размер шрифта суммы (12–30 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val fontSize = SeekBar(this).apply { max = 18; progress = style.fontSize - 12 }
         addControl(fontSize)
+        val fontSizeValue = TextView(this).apply { text = "${fontSize.progress + 12} sp" }
+        addControl(fontSizeValue)
         addControl(TextView(this).apply { text = "Размер шрифта названий (10–24 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val labelSize = SeekBar(this).apply { max = 14; progress = style.labelSize - 10 }
         addControl(labelSize)
+        val labelSizeValue = TextView(this).apply { text = "${labelSize.progress + 10} sp" }
+        addControl(labelSizeValue)
         addControl(TextView(this).apply { text = "Размер шрифта заголовка (10–26 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val headerSize = SeekBar(this).apply { max = 16; progress = style.headerSize - 10 }
         addControl(headerSize)
+        val headerSizeValue = TextView(this).apply { text = "${headerSize.progress + 10} sp" }
+        addControl(headerSizeValue)
         section("Строки и размеры")
         addControl(TextView(this).apply { text = "Количество строк (1–10)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val rowCount = SeekBar(this).apply { max = 9; progress = style.rowCount - 1 }
@@ -236,7 +244,13 @@ class WidgetConfigureActivity : Activity() {
         }
         listOf(background, titleColor, amountColor).forEach { it.addTextChangedListener(previewWatcher) }
         val previewSeekListener = object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { updatePreview() }
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                opacityValue.text = "${opacity.progress}%"
+                fontSizeValue.text = "${fontSize.progress + 12} sp"
+                labelSizeValue.text = "${labelSize.progress + 10} sp"
+                headerSizeValue.text = "${headerSize.progress + 10} sp"
+                updatePreview()
+            }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         }
