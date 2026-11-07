@@ -27,6 +27,22 @@ class WidgetConfigureActivity : Activity() {
         val style = WidgetStyle.load(this, id)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(28, 24, 28, 24) }
         fun heading(label: String) { root.addView(TextView(this).apply { text = label; textSize = 17f; setPadding(0, 18, 0, 5) }) }
+        fun section(label: String) {
+            val density = resources.displayMetrics.density
+            root.addView(TextView(this).apply {
+                text = label
+                textSize = 20f
+                setTypeface(null, Typeface.BOLD)
+                setPadding(0, (24 * density).toInt(), 0, (10 * density).toInt())
+            })
+            root.addView(View(this).apply {
+                setBackgroundColor(Color.GRAY)
+                alpha = 0.35f
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, (1 * density).toInt().coerceAtLeast(1)
+                )
+            })
+        }
         fun entry(value: String, hint: String): EditText = EditText(this).apply {
             setText(value); this.hint = hint; setSingleLine(true); root.addView(this)
         }
@@ -58,6 +74,7 @@ class WidgetConfigureActivity : Activity() {
                 }
             }
         }
+        section("Фон и цвета")
         heading("Цвет фона (HEX)")
         val background = entry(String.format("#%06X", 0xFFFFFF and style.background), "#122D4C")
         val palette = listOf("#122D4C", "#17213A", "#243B55", "#136F63", "#5C3B82", "#333333", "#FFFFFF", "#000000")
@@ -99,6 +116,7 @@ class WidgetConfigureActivity : Activity() {
         heading("Цвет сумм (HEX)")
         val amountColor = entry(String.format("#%06X", 0xFFFFFF and style.amountColor), "#FFFFFF")
         colorSwatches(amountColor, listOf("#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3", "#D6E6F7"))
+        section("Заголовок и текст")
         heading("Иконка")
         val icons = listOf("◆", "🏦", "💳", "💰", "💵", "📊", "📈", "↔", "🛒", "🚗", "🏠", "★", "●", "Без иконки")
         val icon = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, icons); setSelection(icons.indexOf(style.icon).coerceAtLeast(0)) }
@@ -125,6 +143,7 @@ class WidgetConfigureActivity : Activity() {
         heading("Размер шрифта заголовка (10–26 sp)")
         val headerSize = SeekBar(this).apply { max = 16; progress = style.headerSize - 10 }
         root.addView(headerSize)
+        section("Строки и размеры")
         heading("Количество строк (1–10)")
         val rowCount = SeekBar(this).apply { max = 9; progress = style.rowCount - 1 }
         root.addView(rowCount)
@@ -142,7 +161,7 @@ class WidgetConfigureActivity : Activity() {
             isChecked = style.compact
         }
         root.addView(compact)
-        heading("Предварительный просмотр")
+        section("Предварительный просмотр")
         val preview = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24, 20, 24, 20)
