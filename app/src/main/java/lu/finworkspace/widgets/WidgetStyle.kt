@@ -96,14 +96,14 @@ data class WidgetStyle(
         views.setTextColor(R.id.widget_icon, titleColor)
         views.setTextColor(R.id.widget_body, amountColor)
         views.setTextViewTextSize(R.id.widget_body, android.util.TypedValue.COMPLEX_UNIT_SP, fontSize.toFloat())
-        val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label)
-        val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount)
+        val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label, R.id.row_11_label, R.id.row_12_label, R.id.row_13_label, R.id.row_14_label, R.id.row_15_label)
+        val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount, R.id.row_11_amount, R.id.row_12_amount, R.id.row_13_amount, R.id.row_14_amount, R.id.row_15_amount)
         labels.forEach {
             views.setTextColor(it, titleColor)
             views.setTextViewTextSize(it, android.util.TypedValue.COMPLEX_UNIT_SP, labelSize.toFloat())
         }
         amounts.forEach { views.setTextColor(it, amountColor) }
-        val rows = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9, R.id.row_10)
+        val rows = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9, R.id.row_10, R.id.row_11, R.id.row_12, R.id.row_13, R.id.row_14, R.id.row_15)
         rows.forEach { views.setViewPadding(it, 0, if (compact) 0 else 5, 0, if (compact) 0 else 5) }
         // Font family requires predeclared text appearances; avoid invoking
         // setTextAppearance via RemoteViews because it is not supported on all launchers.
