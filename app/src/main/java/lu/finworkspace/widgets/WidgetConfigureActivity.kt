@@ -330,7 +330,8 @@ class WidgetConfigureActivity : Activity() {
                 line.setPadding(0, if (compact.isChecked) 0 else 5, 0, if (compact.isChecked) 0 else 5)
                 val name = line.getChildAt(0) as TextView
                 val value = line.getChildAt(1) as TextView
-                name.text = if (mode == 2) "◆" else samples[index]
+                name.text = if (single && !showAccountName.isChecked) "" else if (mode == 2) "◆" else samples[index]
+                name.visibility = if (name.text.isBlank()) View.GONE else View.VISIBLE
                 name.maxLines = if (mode == 1) 2 else 1
                 name.setTextColor(title)
                 name.textSize = (labelSize.progress + 10).toFloat()
@@ -365,6 +366,7 @@ class WidgetConfigureActivity : Activity() {
         }
         listOf(icon, font, nameMode).forEach { it.onItemSelectedListener = previewSelectionListener }
         showHeader.setOnCheckedChangeListener { _, _ -> updatePreview() }
+        showAccountName.setOnCheckedChangeListener { _, _ -> updatePreview() }
         compact.setOnCheckedChangeListener { _, _ -> updatePreview() }
         rowCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -390,7 +392,7 @@ class WidgetConfigureActivity : Activity() {
         fun setPreviewCompact(compactMode: Boolean) {
             previewToggle.text = if (compactMode) "Развернуть предпросмотр ▾" else "Свернуть предпросмотр ▴"
             previewRows.forEachIndexed { index, line ->
-                line.visibility = if (index < rowCount.progress + 1 && (!compactMode || index == 0)) View.VISIBLE else View.GONE
+                line.visibility = if (index < rowCount.progress + minRows && (!compactMode || index == 0)) View.VISIBLE else View.GONE
             }
             preview.setPadding(24, if (compactMode) 10 else 20, 24, if (compactMode) 10 else 20)
         }
@@ -440,7 +442,7 @@ class WidgetConfigureActivity : Activity() {
                     fontSize.progress + 12,
                     labelSize.progress + 10,
                     headerSize.progress + 10,
-                    rowCount.progress + 1,
+                    rowCount.progress + minRows,
                     compact.isChecked,
                     when (nameMode.selectedItemPosition) { 1 -> 2; 2 -> 0; else -> 1 },
                     if (tapAction.selectedItemPosition == 1) "none" else "edit",
