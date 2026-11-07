@@ -61,23 +61,44 @@ class WidgetConfigureActivity : Activity() {
         heading("Цвет фона (HEX)")
         val background = entry(String.format("#%06X", 0xFFFFFF and style.background), "#122D4C")
         val palette = listOf("#122D4C", "#17213A", "#243B55", "#136F63", "#5C3B82", "#333333", "#FFFFFF", "#000000")
-        val colors = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, palette) }
-        root.addView(colors)
-        // Preserve a custom HEX value when the palette is first initialized.
-        colors.setSelection(0)
-        colors.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, rowId: Long) {
-                if (position != 0) background.setText(palette[position])
+        fun colorSwatches(target: EditText, choices: List<String>) {
+            val grid = android.widget.GridLayout(this).apply {
+                columnCount = 4
+                setPadding(0, 8, 0, 8)
             }
+            choices.forEach { hex ->
+                val swatch = TextView(this).apply {
+                    text = "●"
+                    textSize = 30f
+                    gravity = android.view.Gravity.CENTER
+                    setTextColor(Color.parseColor(hex))
+                    contentDescription = "Выбрать цвет $hex"
+                    background = GradientDrawable().apply {
+                        setColor(Color.rgb(220, 220, 220))
+                        cornerRadius = 12f
+                    }
+                    setOnClickListener { target.setText(hex) }
+                }
+                val cell = android.widget.GridLayout.LayoutParams().apply {
+                    width = 0
+                    height = (56 * resources.displayMetrics.density).toInt()
+                    columnSpec = android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED, 1f)
+                    setMargins(4, 4, 4, 4)
+                }
+                grid.addView(swatch, cell)
+            }
+            root.addView(grid)
         }
+        colorSwatches(background, palette)
         heading("Прозрачность фона (0% — прозрачный, 100% — непрозрачный)")
         val opacity = SeekBar(this).apply { max = 100; progress = style.opacity }
         root.addView(opacity)
         heading("Цвет названий (HEX)")
         val titleColor = entry(String.format("#%06X", 0xFFFFFF and style.titleColor), "#CDE1F8")
+        colorSwatches(titleColor, listOf("#CDE1F8", "#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3"))
         heading("Цвет сумм (HEX)")
         val amountColor = entry(String.format("#%06X", 0xFFFFFF and style.amountColor), "#FFFFFF")
+        colorSwatches(amountColor, listOf("#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3", "#D6E6F7"))
         heading("Иконка")
         val icons = listOf("◆", "🏦", "💳", "💰", "💵", "📊", "📈", "↔", "🛒", "🚗", "🏠", "★", "●", "Без иконки")
         val icon = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, icons); setSelection(icons.indexOf(style.icon).coerceAtLeast(0)) }
