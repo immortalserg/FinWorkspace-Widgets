@@ -5,6 +5,7 @@
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
         <activity android:name=".AccountWidgetConfigureActivity" android:exported="true"/>
+        <activity android:name=".WidgetConfigureActivity" android:exported="true"/>
         <receiver android:name=".SingleAccountWidget" android:exported="true" android:label="FinWorkspace — Счёт">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_single"/>
