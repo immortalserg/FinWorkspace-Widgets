@@ -117,8 +117,8 @@ class WidgetConfigureActivity : Activity() {
             addControl(grid)
         }
         colorSwatches(background, palette)
-        addControl(TextView(this).apply { text = "Прозрачность фона (0% — прозрачный, 100% — непрозрачный)")
-        val opacity = SeekBar(this; textSize = 17f; setPadding(0, 18, 0, 5) }).apply { max = 100; progress = style.opacity }
+        addControl(TextView(this).apply { text = "Прозрачность фона (0% — прозрачный, 100% — непрозрачный)"; textSize = 17f; setPadding(0, 18, 0, 5) })
+        val opacity = SeekBar(this).apply { max = 100; progress = style.opacity }
         addControl(opacity)
         addControl(TextView(this).apply { text = "Цвет названий (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val titleColor = entry(String.format("#%06X", 0xFFFFFF and style.titleColor), "#CDE1F8")
@@ -147,11 +147,11 @@ class WidgetConfigureActivity : Activity() {
         addControl(TextView(this).apply { text = "Размер шрифта суммы (12–30 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val fontSize = SeekBar(this).apply { max = 18; progress = style.fontSize - 12 }
         addControl(fontSize)
-        addControl(TextView(this).apply { text = "Размер шрифта названий (10–24 sp)")
-        val labelSize = SeekBar(this; textSize = 17f; setPadding(0, 18, 0, 5) }).apply { max = 14; progress = style.labelSize - 10 }
+        addControl(TextView(this).apply { text = "Размер шрифта названий (10–24 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
+        val labelSize = SeekBar(this).apply { max = 14; progress = style.labelSize - 10 }
         addControl(labelSize)
-        addControl(TextView(this).apply { text = "Размер шрифта заголовка (10–26 sp)")
-        val headerSize = SeekBar(this; textSize = 17f; setPadding(0, 18, 0, 5) }).apply { max = 16; progress = style.headerSize - 10 }
+        addControl(TextView(this).apply { text = "Размер шрифта заголовка (10–26 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
+        val headerSize = SeekBar(this).apply { max = 16; progress = style.headerSize - 10 }
         addControl(headerSize)
         section("Строки и размеры")
         addControl(TextView(this).apply { text = "Количество строк (1–10)"; textSize = 17f; setPadding(0, 18, 0, 5) })
