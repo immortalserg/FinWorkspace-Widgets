@@ -4,6 +4,11 @@ import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.text.TextWatcher
+import android.text.Editable
+import android.view.View
 import android.os.Bundle
 import android.text.InputType
 import android.widget.*
@@ -116,6 +121,94 @@ class WidgetConfigureActivity : Activity() {
             isChecked = style.compact
         }
         root.addView(compact)
+        heading("Предварительный просмотр")
+        val preview = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 20, 24, 20)
+        }
+        val previewHeading = TextView(this)
+        val previewRows = (0 until 3).map {
+            LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                val label = TextView(this@WidgetConfigureActivity).apply {
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                }
+                val amount = TextView(this@WidgetConfigureActivity).apply {
+                    gravity = android.view.Gravity.END
+                    setPadding(12, 0, 0, 0)
+                }
+                addView(label); addView(amount)
+            }
+        }
+        preview.addView(previewHeading)
+        previewRows.forEach { preview.addView(it) }
+        root.addView(preview)
+        fun updatePreview() {
+            val bg = runCatching { Color.parseColor(background.text.toString().trim()) }.getOrDefault(style.background)
+            val title = runCatching { Color.parseColor(titleColor.text.toString().trim()) }.getOrDefault(style.titleColor)
+            val amountColorValue = runCatching { Color.parseColor(amountColor.text.toString().trim()) }.getOrDefault(style.amountColor)
+            val face = when (font.selectedItemPosition) {
+                1 -> Typeface.SERIF
+                2 -> Typeface.MONOSPACE
+                else -> Typeface.SANS_SERIF
+            }
+            preview.background = GradientDrawable().apply {
+                cornerRadius = 20f
+                setColor((bg and 0x00FFFFFF) or ((opacity.progress * 255 / 100) shl 24))
+            }
+            val symbol = icons.getOrNull(icon.selectedItemPosition).orEmpty().takeUnless { it == "Без иконки" }.orEmpty()
+            previewHeading.text = listOf(symbol, if (showHeader.isChecked) "FinWorkspace" else "").filter { it.isNotBlank() }.joinToString("  ")
+            previewHeading.visibility = if (previewHeading.text.isBlank()) View.GONE else View.VISIBLE
+            previewHeading.setTextColor(title)
+            previewHeading.textSize = (headerSize.progress + 10).toFloat()
+            previewHeading.typeface = face
+            val mode = nameMode.selectedItemPosition
+            val samples = listOf("Основной счёт", "Сбережения", "Карта")
+            val values = listOf("1 234,56 €", "980,00 €", "−42,50 €")
+            previewRows.forEachIndexed { index, line ->
+                line.visibility = if (index < rowCount.progress + 1) View.VISIBLE else View.GONE
+                line.setPadding(0, if (compact.isChecked) 0 else 5, 0, if (compact.isChecked) 0 else 5)
+                val name = line.getChildAt(0) as TextView
+                val value = line.getChildAt(1) as TextView
+                name.text = if (mode == 2) "◆" else samples[index]
+                name.maxLines = if (mode == 1) 2 else 1
+                name.setTextColor(title)
+                name.textSize = (labelSize.progress + 10).toFloat()
+                name.typeface = face
+                value.text = values[index]
+                value.setTextColor(amountColorValue)
+                value.textSize = (fontSize.progress + 12).toFloat()
+                value.typeface = face
+            }
+        }
+        val previewWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { updatePreview() }
+            override fun afterTextChanged(s: Editable?) {}
+        }
+        listOf(background, titleColor, amountColor).forEach { it.addTextChangedListener(previewWatcher) }
+        val previewSeekListener = object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { updatePreview() }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        }
+        listOf(opacity, fontSize, labelSize, headerSize).forEach { it.setOnSeekBarChangeListener(previewSeekListener) }
+        val previewSelectionListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) { updatePreview() }
+        }
+        listOf(icon, font, nameMode).forEach { it.onItemSelectedListener = previewSelectionListener }
+        showHeader.setOnCheckedChangeListener { _, _ -> updatePreview() }
+        compact.setOnCheckedChangeListener { _, _ -> updatePreview() }
+        rowCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                rowCountValue.text = "${progress + 1} строк"
+                updatePreview()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+        updatePreview()
         val error = TextView(this)
         root.addView(error)
         val save = Button(this).apply { text = "Сохранить настройки" }
