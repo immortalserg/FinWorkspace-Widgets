@@ -262,6 +262,29 @@ class WidgetConfigureActivity : Activity() {
         val save = Button(this).apply { text = "Сохранить настройки" }
         root.addView(save)
         val screen = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val previewCompact = getSharedPreferences("widget_preview_ui", MODE_PRIVATE)
+            .getBoolean("compact", false)
+        val previewToggle = TextView(this).apply {
+            textSize = 14f
+            setPadding(28, 8, 28, 8)
+            gravity = android.view.Gravity.END
+        }
+        fun setPreviewCompact(compactMode: Boolean) {
+            previewToggle.text = if (compactMode) "Развернуть предпросмотр ▾" else "Свернуть предпросмотр ▴"
+            previewRows.forEachIndexed { index, line ->
+                line.visibility = if (compactMode && index > 0) View.GONE else View.VISIBLE
+            }
+            preview.setPadding(24, if (compactMode) 10 else 20, 24, if (compactMode) 10 else 20)
+        }
+        var isPreviewCompact = previewCompact
+        previewToggle.setOnClickListener {
+            isPreviewCompact = !isPreviewCompact
+            getSharedPreferences("widget_preview_ui", MODE_PRIVATE).edit()
+                .putBoolean("compact", isPreviewCompact).apply()
+            updatePreview()
+            setPreviewCompact(isPreviewCompact)
+        }
+        setPreviewCompact(isPreviewCompact)
         val previewTitle = TextView(this).apply {
             text = "Предварительный просмотр"
             textSize = 16f
@@ -269,6 +292,7 @@ class WidgetConfigureActivity : Activity() {
             setPadding(28, 12, 28, 6)
         }
         screen.addView(previewTitle)
+        screen.addView(previewToggle)
         val previewContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(28, 0, 28, 12)
@@ -282,6 +306,7 @@ class WidgetConfigureActivity : Activity() {
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
         ))
         setContentView(screen)
+        setPreviewCompact(isPreviewCompact)
         save.setOnClickListener {
             try {
                 val selected = if (single) ids.getOrNull(account.selectedItemPosition) else null
