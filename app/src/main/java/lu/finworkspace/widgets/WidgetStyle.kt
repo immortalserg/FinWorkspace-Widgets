@@ -26,7 +26,8 @@ data class WidgetStyle(
     val rowCount: Int = 5,
     val compact: Boolean = false,
     val nameLines: Int = 1,
-    val tapAction: String = "edit"
+    val tapAction: String = "edit",
+    val showAccountName: Boolean = true
 ) {
     companion object {
         fun load(context: Context, id: Int): WidgetStyle {
@@ -44,10 +45,11 @@ data class WidgetStyle(
                 p.getInt(k + "fontSize", 18).coerceIn(12, 30),
                 p.getInt(k + "labelSize", 14).coerceIn(10, 24),
                 p.getInt(k + "headerSize", 16).coerceIn(10, 26),
-                p.getInt(k + "rowCount", 5).coerceIn(1, 10),
+                p.getInt(k + "rowCount", 5).coerceIn(1, 15),
                 p.getBoolean(k + "compact", false),
                 p.getInt(k + "nameLines", if (p.getBoolean(k + "showName", true)) 1 else 0).coerceIn(0, 2),
-                p.getString(k + "tapAction", "edit").takeIf { it == "none" } ?: "edit"
+                p.getString(k + "tapAction", "edit").takeIf { it == "none" } ?: "edit",
+                p.getBoolean(k + "showAccountName", true)
             )
         }
     }
@@ -68,7 +70,8 @@ data class WidgetStyle(
             .putInt(k + "rowCount", rowCount)
             .putBoolean(k + "compact", compact)
             .putInt(k + "nameLines", nameLines)
-            .putString(k + "tapAction", tapAction).apply()
+            .putString(k + "tapAction", tapAction)
+            .putBoolean(k + "showAccountName", showAccountName).apply()
     }
     fun styled(value: String): CharSequence {
         val family = when (font) {
