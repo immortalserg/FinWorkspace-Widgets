@@ -54,7 +54,7 @@ class WidgetConfigureActivity : Activity() {
             activeSection = content
         }
         fun entry(value: String, hint: String): EditText = EditText(this).apply {
-            setText(value); this.hint = hint; setSingleLine(true); root.addView(this)
+            setText(value); this.hint = hint; setSingleLine(true); addControl(this)
         }
         root.addView(TextView(this).apply { text = "Настройка виджета"; textSize = 24f })
         val ids = mutableListOf<Int>()
