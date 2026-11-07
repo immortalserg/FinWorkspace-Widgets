@@ -37,7 +37,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
         ids.forEach { id ->
             prefs.remove("account_$id")
-            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount", "compact", "nameLines", "tapAction").forEach { prefs.remove("style_${id}_$it") }
+            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount", "compact", "nameLines", "tapAction", "showAccountName").forEach { prefs.remove("style_${id}_$it") }
         }
         prefs.apply()
     }
@@ -75,9 +75,9 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             views.setViewVisibility(R.id.widget_title, if (style.showHeader) android.view.View.VISIBLE else android.view.View.GONE)
             views.setTextViewText(R.id.widget_body, style.styled(body))
             views.setViewVisibility(R.id.widget_body, if (body.isBlank()) android.view.View.GONE else android.view.View.VISIBLE)
-            val ids = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9, R.id.row_10)
-            val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label)
-            val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount)
+            val ids = intArrayOf(R.id.row_1, R.id.row_2, R.id.row_3, R.id.row_4, R.id.row_5, R.id.row_6, R.id.row_7, R.id.row_8, R.id.row_9, R.id.row_10, R.id.row_11, R.id.row_12, R.id.row_13, R.id.row_14, R.id.row_15)
+            val labels = intArrayOf(R.id.row_1_label, R.id.row_2_label, R.id.row_3_label, R.id.row_4_label, R.id.row_5_label, R.id.row_6_label, R.id.row_7_label, R.id.row_8_label, R.id.row_9_label, R.id.row_10_label, R.id.row_11_label, R.id.row_12_label, R.id.row_13_label, R.id.row_14_label, R.id.row_15_label)
+            val amounts = intArrayOf(R.id.row_1_amount, R.id.row_2_amount, R.id.row_3_amount, R.id.row_4_amount, R.id.row_5_amount, R.id.row_6_amount, R.id.row_7_amount, R.id.row_8_amount, R.id.row_9_amount, R.id.row_10_amount, R.id.row_11_amount, R.id.row_12_amount, R.id.row_13_amount, R.id.row_14_amount, R.id.row_15_amount)
             val options = manager.getAppWidgetOptions(id)
             val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
             val maxWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 0)
@@ -95,12 +95,12 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
             val rowDp = maxOf(style.fontSize, labelHeight) + if (style.compact) 4 else 14
             val availableDp = (heightDp - 32 - headerDp - bodyDp).coerceAtLeast(0)
             // Some launchers report zero dimensions while creating a widget.
-            val fittingRows = if (heightDp > 0) (availableDp / rowDp).coerceIn(0, 10) else 10
+            val fittingRows = if (heightDp > 0) (availableDp / rowDp).coerceIn(0, 15) else 15
             ids.forEachIndexed { i, row ->
                 val data = if (i < minOf(style.rowCount, fittingRows)) rows.getOrNull(i) else null
                 views.setViewVisibility(row, if (data == null) android.view.View.GONE else android.view.View.VISIBLE)
                 if (data != null) {
-                    val labelText = if (style.nameLines > 0) data.first else {
+                    val labelText = if (provider == SingleAccountWidget::class.java && !style.showAccountName) "" else if (style.nameLines > 0) data.first else {
                         if (provider == TransactionsWidget::class.java) data.first.takeWhile { it != ' ' }
                         else ""
                     }
@@ -115,6 +115,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
                         styledLabel.setSpan(ForegroundColorSpan(iconColor), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                     }
                     views.setTextViewText(labels[i], styledLabel)
+                    views.setViewVisibility(labels[i], if (labelText.isBlank()) android.view.View.GONE else android.view.View.VISIBLE)
                     views.setTextViewText(amounts[i], style.styled(data.second))
                     // On narrow launchers reserve space for the label instead of letting
                     // a long formatted amount consume the entire horizontal row.
@@ -220,7 +221,7 @@ class WidgetWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             val a = accounts.getJSONObject(i)
             currencies[a.optInt("id")] = a.optString("currency", "EUR")
         }
-        return (0 until minOf(items.length(), 10)).map { i ->
+        return (0 until minOf(items.length(), 15)).map { i ->
             val item = items.getJSONObject(i)
             val type = item.optString("type")
             val sign = when (type) { "expense" -> "−"; "income" -> "+"; else -> "⇄" }
