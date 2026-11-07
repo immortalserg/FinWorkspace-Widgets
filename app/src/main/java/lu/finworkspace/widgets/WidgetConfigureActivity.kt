@@ -171,7 +171,6 @@ class WidgetConfigureActivity : Activity() {
             isChecked = style.compact
         }
         addControl(compact)
-        section("Предварительный просмотр", true)
         val preview = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24, 20, 24, 20)
@@ -192,7 +191,6 @@ class WidgetConfigureActivity : Activity() {
         }
         preview.addView(previewHeading)
         previewRows.forEach { preview.addView(it) }
-        addControl(preview)
         fun updatePreview() {
             val bg = runCatching { Color.parseColor(background.text.toString().trim()) }.getOrDefault(style.background)
             val title = runCatching { Color.parseColor(titleColor.text.toString().trim()) }.getOrDefault(style.titleColor)
@@ -263,7 +261,27 @@ class WidgetConfigureActivity : Activity() {
         root.addView(error)
         val save = Button(this).apply { text = "Сохранить настройки" }
         root.addView(save)
-        setContentView(ScrollView(this).apply { addView(root) })
+        val screen = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val previewTitle = TextView(this).apply {
+            text = "Предварительный просмотр"
+            textSize = 16f
+            setTypeface(null, Typeface.BOLD)
+            setPadding(28, 12, 28, 6)
+        }
+        screen.addView(previewTitle)
+        val previewContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(28, 0, 28, 12)
+            addView(preview)
+        }
+        screen.addView(previewContainer)
+        screen.addView(ScrollView(this).apply {
+            fillViewport = false
+            addView(root)
+        }, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+        ))
+        setContentView(screen)
         save.setOnClickListener {
             try {
                 val selected = if (single) ids.getOrNull(account.selectedItemPosition) else null
