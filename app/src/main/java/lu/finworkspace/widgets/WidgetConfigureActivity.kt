@@ -27,21 +27,31 @@ class WidgetConfigureActivity : Activity() {
         val style = WidgetStyle.load(this, id)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(28, 24, 28, 24) }
         fun heading(label: String) { root.addView(TextView(this).apply { text = label; textSize = 17f; setPadding(0, 18, 0, 5) }) }
-        fun section(label: String) {
+        var activeSection: LinearLayout? = null
+        fun addControl(view: View) {
+            (activeSection ?: root).addView(view)
+        }
+        fun section(label: String, initiallyExpanded: Boolean = false) {
             val density = resources.displayMetrics.density
-            root.addView(TextView(this).apply {
-                text = label
-                textSize = 20f
+            val content = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                visibility = if (initiallyExpanded) View.VISIBLE else View.GONE
+            }
+            val toggle = TextView(this).apply {
+                textSize = 19f
                 setTypeface(null, Typeface.BOLD)
-                setPadding(0, (24 * density).toInt(), 0, (10 * density).toInt())
-            })
-            root.addView(View(this).apply {
-                setBackgroundColor(Color.GRAY)
-                alpha = 0.35f
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, (1 * density).toInt().coerceAtLeast(1)
-                )
-            })
+                setPadding(0, (18 * density).toInt(), 0, (12 * density).toInt())
+                text = (if (initiallyExpanded) "▾  " else "▸  ") + label
+                contentDescription = label
+                setOnClickListener {
+                    val expand = content.visibility != View.VISIBLE
+                    content.visibility = if (expand) View.VISIBLE else View.GONE
+                    text = (if (expand) "▾  " else "▸  ") + label
+                }
+            }
+            root.addView(toggle)
+            root.addView(content)
+            activeSection = content
         }
         fun entry(value: String, hint: String): EditText = EditText(this).apply {
             setText(value); this.hint = hint; setSingleLine(true); root.addView(this)
@@ -74,8 +84,8 @@ class WidgetConfigureActivity : Activity() {
                 }
             }
         }
-        section("Фон и цвета")
-        heading("Цвет фона (HEX)")
+        section("Фон и цвета", true)
+        addControl(TextView(this).apply { text = "Цвет фона (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val background = entry(String.format("#%06X", 0xFFFFFF and style.background), "#122D4C")
         val palette = listOf("#122D4C", "#17213A", "#243B55", "#136F63", "#5C3B82", "#333333", "#FFFFFF", "#000000")
         fun colorSwatches(target: EditText, choices: List<String>) {
@@ -104,51 +114,51 @@ class WidgetConfigureActivity : Activity() {
                 }
                 grid.addView(swatch, cell)
             }
-            root.addView(grid)
+            addControl(grid)
         }
         colorSwatches(background, palette)
-        heading("Прозрачность фона (0% — прозрачный, 100% — непрозрачный)")
-        val opacity = SeekBar(this).apply { max = 100; progress = style.opacity }
-        root.addView(opacity)
-        heading("Цвет названий (HEX)")
+        addControl(TextView(this).apply { text = "Прозрачность фона (0% — прозрачный, 100% — непрозрачный)")
+        val opacity = SeekBar(this; textSize = 17f; setPadding(0, 18, 0, 5) }).apply { max = 100; progress = style.opacity }
+        addControl(opacity)
+        addControl(TextView(this).apply { text = "Цвет названий (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val titleColor = entry(String.format("#%06X", 0xFFFFFF and style.titleColor), "#CDE1F8")
         colorSwatches(titleColor, listOf("#CDE1F8", "#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3"))
-        heading("Цвет сумм (HEX)")
+        addControl(TextView(this).apply { text = "Цвет сумм (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val amountColor = entry(String.format("#%06X", 0xFFFFFF and style.amountColor), "#FFFFFF")
         colorSwatches(amountColor, listOf("#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3", "#D6E6F7"))
         section("Заголовок и текст")
-        heading("Иконка")
+        addControl(TextView(this).apply { text = "Иконка"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val icons = listOf("◆", "🏦", "💳", "💰", "💵", "📊", "📈", "↔", "🛒", "🚗", "🏠", "★", "●", "Без иконки")
         val icon = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, icons); setSelection(icons.indexOf(style.icon).coerceAtLeast(0)) }
-        root.addView(icon)
+        addControl(icon)
         val showHeader = CheckBox(this).apply { text = "Отображать заголовок"; isChecked = style.showHeader }
-        root.addView(showHeader)
-        heading("Отображение названий")
+        addControl(showHeader)
+        addControl(TextView(this).apply { text = "Отображение названий"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val nameModes = listOf("Одна строка", "Две строки", "Только иконка")
         val nameMode = Spinner(this).apply {
             adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, nameModes)
             setSelection(when (style.nameLines) { 2 -> 1; 0 -> 2; else -> 0 })
         }
-        root.addView(nameMode)
-        heading("Шрифт")
+        addControl(nameMode)
+        addControl(TextView(this).apply { text = "Шрифт"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val fonts = listOf("Обычный", "С засечками", "Моноширинный")
         val font = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, fonts); setSelection(listOf("sans", "serif", "mono").indexOf(style.font).coerceAtLeast(0)) }
-        root.addView(font)
-        heading("Размер шрифта суммы (12–30 sp)")
+        addControl(font)
+        addControl(TextView(this).apply { text = "Размер шрифта суммы (12–30 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val fontSize = SeekBar(this).apply { max = 18; progress = style.fontSize - 12 }
-        root.addView(fontSize)
-        heading("Размер шрифта названий (10–24 sp)")
-        val labelSize = SeekBar(this).apply { max = 14; progress = style.labelSize - 10 }
-        root.addView(labelSize)
-        heading("Размер шрифта заголовка (10–26 sp)")
-        val headerSize = SeekBar(this).apply { max = 16; progress = style.headerSize - 10 }
-        root.addView(headerSize)
+        addControl(fontSize)
+        addControl(TextView(this).apply { text = "Размер шрифта названий (10–24 sp)")
+        val labelSize = SeekBar(this; textSize = 17f; setPadding(0, 18, 0, 5) }).apply { max = 14; progress = style.labelSize - 10 }
+        addControl(labelSize)
+        addControl(TextView(this).apply { text = "Размер шрифта заголовка (10–26 sp)")
+        val headerSize = SeekBar(this; textSize = 17f; setPadding(0, 18, 0, 5) }).apply { max = 16; progress = style.headerSize - 10 }
+        addControl(headerSize)
         section("Строки и размеры")
-        heading("Количество строк (1–10)")
+        addControl(TextView(this).apply { text = "Количество строк (1–10)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val rowCount = SeekBar(this).apply { max = 9; progress = style.rowCount - 1 }
-        root.addView(rowCount)
+        addControl(rowCount)
         val rowCountValue = TextView(this).apply { text = "${rowCount.progress + 1} строк" }
-        root.addView(rowCountValue)
+        addControl(rowCountValue)
         rowCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 rowCountValue.text = "${progress + 1} строк"
@@ -160,8 +170,8 @@ class WidgetConfigureActivity : Activity() {
             text = "Компактные строки (уменьшенные отступы)"
             isChecked = style.compact
         }
-        root.addView(compact)
-        section("Предварительный просмотр")
+        addControl(compact)
+        section("Предварительный просмотр", true)
         val preview = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24, 20, 24, 20)
@@ -182,7 +192,7 @@ class WidgetConfigureActivity : Activity() {
         }
         preview.addView(previewHeading)
         previewRows.forEach { preview.addView(it) }
-        root.addView(preview)
+        addControl(preview)
         fun updatePreview() {
             val bg = runCatching { Color.parseColor(background.text.toString().trim()) }.getOrDefault(style.background)
             val title = runCatching { Color.parseColor(titleColor.text.toString().trim()) }.getOrDefault(style.titleColor)
