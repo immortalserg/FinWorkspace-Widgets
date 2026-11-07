@@ -214,7 +214,7 @@ class WidgetConfigureActivity : Activity() {
             val samples = listOf("Основной счёт", "Сбережения", "Карта")
             val values = listOf("1 234,56 €", "980,00 €", "−42,50 €")
             previewRows.forEachIndexed { index, line ->
-                line.visibility = if (index < rowCount.progress + 1) View.VISIBLE else View.GONE
+                line.visibility = if (index < rowCount.progress + 1 && (!getSharedPreferences("widget_preview_ui", MODE_PRIVATE).getBoolean("compact", false) || index == 0)) View.VISIBLE else View.GONE
                 line.setPadding(0, if (compact.isChecked) 0 else 5, 0, if (compact.isChecked) 0 else 5)
                 val name = line.getChildAt(0) as TextView
                 val value = line.getChildAt(1) as TextView
@@ -272,7 +272,7 @@ class WidgetConfigureActivity : Activity() {
         fun setPreviewCompact(compactMode: Boolean) {
             previewToggle.text = if (compactMode) "Развернуть предпросмотр ▾" else "Свернуть предпросмотр ▴"
             previewRows.forEachIndexed { index, line ->
-                line.visibility = if (compactMode && index > 0) View.GONE else View.VISIBLE
+                line.visibility = if (index < rowCount.progress + 1 && (!compactMode || index == 0)) View.VISIBLE else View.GONE
             }
             preview.setPadding(24, if (compactMode) 10 else 20, 24, if (compactMode) 10 else 20)
         }
