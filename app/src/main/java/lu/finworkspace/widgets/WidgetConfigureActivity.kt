@@ -53,6 +53,25 @@ class WidgetConfigureActivity : Activity() {
             root.addView(content)
             activeSection = content
         }
+        fun stepButtons(slider: SeekBar) {
+            val buttons = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.END
+            }
+            val minus = Button(this).apply {
+                text = "−"
+                contentDescription = "Уменьшить значение"
+                setOnClickListener { slider.progress = (slider.progress - 1).coerceAtLeast(0) }
+            }
+            val plus = Button(this).apply {
+                text = "+"
+                contentDescription = "Увеличить значение"
+                setOnClickListener { slider.progress = (slider.progress + 1).coerceAtMost(slider.max) }
+            }
+            buttons.addView(minus)
+            buttons.addView(plus)
+            addControl(buttons)
+        }
         fun entry(value: String, hint: String): EditText = EditText(this).apply {
             setText(value); this.hint = hint; setSingleLine(true); addControl(this)
         }
@@ -120,6 +139,7 @@ class WidgetConfigureActivity : Activity() {
         addControl(TextView(this).apply { text = "Прозрачность фона (0% — прозрачный, 100% — непрозрачный)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val opacity = SeekBar(this).apply { max = 100; progress = style.opacity }
         addControl(opacity)
+        stepButtons(opacity)
         val opacityValue = TextView(this).apply { text = "${opacity.progress}%" }
         addControl(opacityValue)
         addControl(TextView(this).apply { text = "Цвет названий (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
@@ -149,22 +169,26 @@ class WidgetConfigureActivity : Activity() {
         addControl(TextView(this).apply { text = "Размер шрифта суммы (12–30 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val fontSize = SeekBar(this).apply { max = 18; progress = style.fontSize - 12 }
         addControl(fontSize)
+        stepButtons(fontSize)
         val fontSizeValue = TextView(this).apply { text = "${fontSize.progress + 12} sp" }
         addControl(fontSizeValue)
         addControl(TextView(this).apply { text = "Размер шрифта названий (10–24 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val labelSize = SeekBar(this).apply { max = 14; progress = style.labelSize - 10 }
         addControl(labelSize)
+        stepButtons(labelSize)
         val labelSizeValue = TextView(this).apply { text = "${labelSize.progress + 10} sp" }
         addControl(labelSizeValue)
         addControl(TextView(this).apply { text = "Размер шрифта заголовка (10–26 sp)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val headerSize = SeekBar(this).apply { max = 16; progress = style.headerSize - 10 }
         addControl(headerSize)
+        stepButtons(headerSize)
         val headerSizeValue = TextView(this).apply { text = "${headerSize.progress + 10} sp" }
         addControl(headerSizeValue)
         section("Строки и размеры")
         addControl(TextView(this).apply { text = "Количество строк (1–10)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val rowCount = SeekBar(this).apply { max = 9; progress = style.rowCount - 1 }
         addControl(rowCount)
+        stepButtons(rowCount)
         val rowCountValue = TextView(this).apply { text = "${rowCount.progress + 1} строк" }
         addControl(rowCountValue)
         rowCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
