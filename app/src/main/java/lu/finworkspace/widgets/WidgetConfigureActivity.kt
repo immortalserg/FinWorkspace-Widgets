@@ -106,36 +106,92 @@ class WidgetConfigureActivity : Activity() {
         section("Фон и цвета", true)
         addControl(TextView(this).apply { text = "Цвет фона (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val background = entry(String.format("#%06X", 0xFFFFFF and style.background), "#122D4C")
-        val palette = listOf("#122D4C", "#17213A", "#243B55", "#136F63", "#5C3B82", "#333333", "#FFFFFF", "#000000")
-        fun colorSwatches(target: EditText, choices: List<String>) {
-            val grid = android.widget.GridLayout(this).apply {
-                columnCount = 4
-                setPadding(0, 8, 0, 8)
+        fun colorPicker(target: EditText) {
+            val initial = runCatching { Color.parseColor(target.text.toString().trim()) }.getOrDefault(Color.WHITE)
+            val hsv = FloatArray(3)
+            Color.colorToHSV(initial, hsv)
+            val panel = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(32, 20, 32, 8)
             }
-            choices.forEach { hex ->
-                val swatch = TextView(this).apply {
-                    text = "●"
-                    textSize = 30f
-                    gravity = android.view.Gravity.CENTER
-                    setTextColor(Color.parseColor(hex))
-                    contentDescription = "Выбрать цвет $hex"
-                    this.background = GradientDrawable().apply {
-                        setColor(Color.rgb(220, 220, 220))
-                        cornerRadius = 12f
-                    }
-                    setOnClickListener { target.setText(hex) }
-                }
-                val cell = android.widget.GridLayout.LayoutParams().apply {
-                    width = 0
-                    height = (56 * resources.displayMetrics.density).toInt()
-                    columnSpec = android.widget.GridLayout.spec(android.widget.GridLayout.UNDEFINED, 1f)
-                    setMargins(4, 4, 4, 4)
-                }
-                grid.addView(swatch, cell)
+            val sample = View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    (48 * resources.displayMetrics.density).toInt()
+                )
             }
-            addControl(grid)
+            panel.addView(sample)
+            val controls = mutableListOf<SeekBar>()
+            listOf("Оттенок", "Насыщенность", "Яркость").forEachIndexed { index, label ->
+                panel.addView(TextView(this).apply { text = label; setPadding(0, 12, 0, 0) })
+                val slider = SeekBar(this).apply {
+                    max = if (index == 0) 360 else 100
+                    progress = (hsv[index] * if (index == 0) 1f else 100f).toInt()
+                }
+                panel.addView(slider)
+                controls.add(slider)
+            }
+            fun chosenColor(): Int = Color.HSVToColor(floatArrayOf(
+                controls[0].progress.toFloat(),
+                controls[1].progress / 100f,
+                controls[2].progress / 100f
+            ))
+            fun updateSample() {
+                sample.setBackgroundColor(chosenColor())
+            }
+            controls.forEach { slider ->
+                slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) { updateSample() }
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                })
+            }
+            updateSample()
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Выбор цвета")
+                .setView(panel)
+                .setNegativeButton("Отмена", null)
+                .setPositiveButton("Выбрать") { _, _ ->
+                    target.setText(String.format("#%06X", chosenColor() and 0xFFFFFF))
+                }
+                .show()
         }
-        colorSwatches(background, palette)
+        fun colorControl(target: EditText) {
+            val parent = target.parent as? android.view.ViewGroup ?: return
+            val position = parent.indexOfChild(target)
+            parent.removeView(target)
+            val line = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            val swatch = View(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    (46 * resources.displayMetrics.density).toInt(),
+                    (46 * resources.displayMetrics.density).toInt()
+                ).apply { setMargins(0, 0, 12, 0) }
+                contentDescription = "Открыть палитру цветов"
+                setOnClickListener { colorPicker(target) }
+            }
+            fun updateSwatch() {
+                val color = runCatching { Color.parseColor(target.text.toString().trim()) }.getOrDefault(Color.GRAY)
+                swatch.background = GradientDrawable().apply {
+                    setColor(color)
+                    cornerRadius = 10 * resources.displayMetrics.density
+                    setStroke(1, Color.GRAY)
+                }
+            }
+            target.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            line.addView(swatch)
+            line.addView(target)
+            target.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { updateSwatch() }
+                override fun afterTextChanged(s: Editable?) {}
+            })
+            updateSwatch()
+            parent.addView(line, position)
+        }
+        colorControl(background)
         addControl(TextView(this).apply { text = "Прозрачность фона (0% — прозрачный, 100% — непрозрачный)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val opacity = SeekBar(this).apply { max = 100; progress = style.opacity }
         addControl(opacity)
@@ -144,14 +200,14 @@ class WidgetConfigureActivity : Activity() {
         addControl(opacityValue)
         addControl(TextView(this).apply { text = "Цвет названий (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val titleColor = entry(String.format("#%06X", 0xFFFFFF and style.titleColor), "#CDE1F8")
-        colorSwatches(titleColor, listOf("#CDE1F8", "#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3"))
+        colorControl(titleColor)
         addControl(TextView(this).apply { text = "Цвет сумм (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val amountColor = entry(String.format("#%06X", 0xFFFFFF and style.amountColor), "#FFFFFF")
-        colorSwatches(amountColor, listOf("#FFFFFF", "#000000", "#FFD166", "#98D8C8", "#A7C7E7", "#FF8FA3", "#B8A1E3", "#D6E6F7"))
+        colorControl(amountColor)
         section("Заголовок и текст")
         addControl(TextView(this).apply { text = "Иконка"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val icons = listOf("◆", "🏦", "💳", "💰", "💵", "📊", "📈", "↔", "🛒", "🚗", "🏠", "★", "●", "Без иконки")
-        val icon = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, icons); setSelection(icons.indexOf(style.icon).coerceAtLeast(0)) }
+        val icon = Spinner(this).apply { adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, icons); setSelection(if (style.icon.isEmpty()) icons.lastIndex else icons.indexOf(style.icon).coerceAtLeast(0)) }
         addControl(icon)
         val showHeader = CheckBox(this).apply { text = "Отображать заголовок"; isChecked = style.showHeader }
         addControl(showHeader)
@@ -184,6 +240,13 @@ class WidgetConfigureActivity : Activity() {
         stepButtons(headerSize)
         val headerSizeValue = TextView(this).apply { text = "${headerSize.progress + 10} sp" }
         addControl(headerSizeValue)
+        addControl(TextView(this).apply { text = "Нажатие на виджет"; textSize = 17f; setPadding(0, 18, 0, 5) })
+        val tapActions = listOf("Редактировать виджет", "Ничего не делать")
+        val tapAction = Spinner(this).apply {
+            adapter = ArrayAdapter(this@WidgetConfigureActivity, android.R.layout.simple_spinner_dropdown_item, tapActions)
+            setSelection(if (style.tapAction == "none") 1 else 0)
+        }
+        addControl(tapAction)
         section("Строки и размеры")
         addControl(TextView(this).apply { text = "Количество строк (1–10)"; textSize = 17f; setPadding(0, 18, 0, 5) })
         val rowCount = SeekBar(this).apply { max = 9; progress = style.rowCount - 1 }
@@ -362,7 +425,8 @@ class WidgetConfigureActivity : Activity() {
                     headerSize.progress + 10,
                     rowCount.progress + 1,
                     compact.isChecked,
-                    when (nameMode.selectedItemPosition) { 1 -> 2; 2 -> 0; else -> 1 }
+                    when (nameMode.selectedItemPosition) { 1 -> 2; 2 -> 0; else -> 1 },
+                    if (tapAction.selectedItemPosition == 1) "none" else "edit"
                 )
                 updated.save(this, id)
                 if (selected != null) getSharedPreferences("widget_instances", MODE_PRIVATE).edit().putInt("account_$id", selected).apply()
