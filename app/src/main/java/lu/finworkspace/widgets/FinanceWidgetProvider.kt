@@ -37,7 +37,7 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences("widget_instances", Context.MODE_PRIVATE).edit()
         ids.forEach { id ->
             prefs.remove("account_$id")
-            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount", "compact", "nameLines").forEach { prefs.remove("style_${id}_$it") }
+            listOf("background", "opacity", "titleColor", "amountColor", "icon", "showName", "showHeader", "font", "fontSize", "labelSize", "headerSize", "rowCount", "compact", "nameLines", "tapAction").forEach { prefs.remove("style_${id}_$it") }
         }
         prefs.apply()
     }
@@ -126,8 +126,13 @@ open class FinanceWidgetProvider : AppWidgetProvider() {
                     views.setTextViewTextSize(amounts[i], android.util.TypedValue.COMPLEX_UNIT_SP, amountSize.toFloat())
                 }
             }
-            views.setOnClickPendingIntent(R.id.widget_background, settingsIntent)
-            views.setOnClickPendingIntent(R.id.widget_heading, settingsIntent)
+            if (style.tapAction == "edit") {
+                views.setOnClickPendingIntent(R.id.widget_background, settingsIntent)
+                views.setOnClickPendingIntent(R.id.widget_heading, settingsIntent)
+            } else {
+                views.setOnClickPendingIntent(R.id.widget_background, null)
+                views.setOnClickPendingIntent(R.id.widget_heading, null)
+            }
             manager.updateAppWidget(id, views)
         }
         fun allWidgets(context: Context): List<Pair<Class<out AppWidgetProvider>, Int>> {
