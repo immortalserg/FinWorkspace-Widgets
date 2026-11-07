@@ -24,6 +24,7 @@ class WidgetConfigureActivity : Activity() {
         val manager = AppWidgetManager.getInstance(this)
         val provider = manager.getAppWidgetInfo(id)?.provider?.className.orEmpty()
         val single = provider.endsWith("SingleAccountWidget")
+        val transactions = provider.endsWith("TransactionsWidget")
         val style = WidgetStyle.load(this, id)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(28, 24, 28, 24) }
         fun heading(label: String) { root.addView(TextView(this).apply { text = label; textSize = 17f; setPadding(0, 18, 0, 5) }) }
@@ -102,6 +103,13 @@ class WidgetConfigureActivity : Activity() {
                     }.onFailure { info.text = "Не удалось загрузить счета: ${it.message}" }
                 }
             }
+        }
+        val showAccountName = CheckBox(this).apply {
+            text = "Показывать название счёта"
+            isChecked = style.showAccountName
+        }
+        if (single) {
+            root.addView(showAccountName)
         }
         section("Фон и цвета", true)
         addControl(TextView(this).apply { text = "Цвет фона (HEX)"; textSize = 17f; setPadding(0, 18, 0, 5) })
@@ -248,15 +256,24 @@ class WidgetConfigureActivity : Activity() {
         }
         addControl(tapAction)
         section("Строки и размеры")
-        addControl(TextView(this).apply { text = "Количество строк (1–10)"; textSize = 17f; setPadding(0, 18, 0, 5) })
-        val rowCount = SeekBar(this).apply { max = 9; progress = style.rowCount - 1 }
+        val minRows = if (transactions) 3 else 1
+        val maxRows = if (transactions) 15 else 10
+        addControl(TextView(this).apply {
+            text = if (transactions) "Количество транзакций (3–15)" else "Количество строк (1–10)"
+            textSize = 17f
+            setPadding(0, 18, 0, 5)
+        })
+        val rowCount = SeekBar(this).apply {
+            max = maxRows - minRows
+            progress = style.rowCount.coerceIn(minRows, maxRows) - minRows
+        }
         addControl(rowCount)
         stepButtons(rowCount)
-        val rowCountValue = TextView(this).apply { text = "${rowCount.progress + 1} строк" }
+        val rowCountValue = TextView(this).apply { text = "${rowCount.progress + minRows} строк" }
         addControl(rowCountValue)
         rowCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                rowCountValue.text = "${progress + 1} строк"
+                rowCountValue.text = "${progress + minRows} строк"
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -309,7 +326,7 @@ class WidgetConfigureActivity : Activity() {
             val samples = listOf("Основной счёт", "Сбережения", "Карта")
             val values = listOf("1 234,56 €", "980,00 €", "−42,50 €")
             previewRows.forEachIndexed { index, line ->
-                line.visibility = if (index < rowCount.progress + 1 && (!getSharedPreferences("widget_preview_ui", MODE_PRIVATE).getBoolean("compact", false) || index == 0)) View.VISIBLE else View.GONE
+                line.visibility = if (index < rowCount.progress + minRows && (!getSharedPreferences("widget_preview_ui", MODE_PRIVATE).getBoolean("compact", false) || index == 0)) View.VISIBLE else View.GONE
                 line.setPadding(0, if (compact.isChecked) 0 else 5, 0, if (compact.isChecked) 0 else 5)
                 val name = line.getChildAt(0) as TextView
                 val value = line.getChildAt(1) as TextView
@@ -351,7 +368,7 @@ class WidgetConfigureActivity : Activity() {
         compact.setOnCheckedChangeListener { _, _ -> updatePreview() }
         rowCount.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                rowCountValue.text = "${progress + 1} строк"
+                rowCountValue.text = "${progress + minRows} строк"
                 updatePreview()
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -426,7 +443,8 @@ class WidgetConfigureActivity : Activity() {
                     rowCount.progress + 1,
                     compact.isChecked,
                     when (nameMode.selectedItemPosition) { 1 -> 2; 2 -> 0; else -> 1 },
-                    if (tapAction.selectedItemPosition == 1) "none" else "edit"
+                    if (tapAction.selectedItemPosition == 1) "none" else "edit",
+                    showAccountName.isChecked
                 )
                 updated.save(this, id)
                 if (selected != null) getSharedPreferences("widget_instances", MODE_PRIVATE).edit().putInt("account_$id", selected).apply()
