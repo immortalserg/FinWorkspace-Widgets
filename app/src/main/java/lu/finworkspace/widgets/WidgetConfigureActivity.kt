@@ -73,7 +73,7 @@ class WidgetConfigureActivity : Activity() {
                     gravity = android.view.Gravity.CENTER
                     setTextColor(Color.parseColor(hex))
                     contentDescription = "Выбрать цвет $hex"
-                    background = GradientDrawable().apply {
+                    this.background = GradientDrawable().apply {
                         setColor(Color.rgb(220, 220, 220))
                         cornerRadius = 12f
                     }
